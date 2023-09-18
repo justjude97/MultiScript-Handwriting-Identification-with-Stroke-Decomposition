@@ -1,0 +1,110 @@
+\documentclass[12pt, lot, lof, los, loa]{southalabamathesis}
+% lot = list of tables ::: lof == list of figures ::: los = list of symbols ::: loa = list of algorithms
+% if you don't need one or more of these, remove it from the list above
+
+\pdfoutput=1 %Ensures pdflatex for automated compilers (e.g. for arXiv submission)
+
+\usepackage{cite}
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage[labelsep=period]{caption}
+\usepackage{fixltx2e}
+\usepackage{soul}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath, amsthm, amssymb, amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{multirow}
+\setul{1pt}{.4pt}
+\usepackage{afterpage}
+  
+\usepackage{graphics}
+\usepackage{graphicx}
+\graphicspath{{static//}}
+\usepackage{subfig}
+\usepackage{indentfirst}
+\usepackage{url}
+\hypersetup{colorlinks=false,bookmarksnumbered,pdftitle=\@title,pdfauthor=\@author}
+
+\newcommand{\T}{\mathrm{T}}
+\newcommand{\lvec}[2]{\begin{bmatrix} \underbrace{#1 \ldots #1}_{#2\text{-times}} \end{bmatrix}}
+
+\newtheorem{localLinearGradient}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem*{convex}{Theorem}
+
+
+\newcommand{\inner}[2]{\langle #1 , #2 \rangle}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%% Front-matter
+
+%Abstract can be any length, but should be max 350 words for a Dissertation for ProQuest's print indicies (150 words for a Master's Thesis) or it will be truncated for those uses.
+
+\abstractopening{Brown, Christopher, Scott, Ph.D., University of South Alabama, May 2020. Local Model Feature Transformations. Chair of Committee: Ryan Benton, Ph.D.}
+
+\abstract{
+    \input{sections/abstract/abstract}
+}
+
+\acknowledgements{
+    \input{sections/acknowledgements/acknowledgements}
+}
+
+\bio{
+    \input{sections/bio/bio}
+}
+
+\title{Local Model Feature Transformations}
+
+\submitted{April 2019}
+\expectedgraddate{May 2020}
+\copyrightyear{2019}  % year in which the copyright is secured by publication of the dissertation.
+\author{Christopher Scott Brown}
+\priordegrees{
+    B.S. Mathematics: University of South Alabama 2006,
+    M.S. Mathematics: University of South Alabama 2007
+}
+\documenttype{A Dissertation}
+\authorreversed{Brown, C. Scott}
+\adviser{Dr. Ryan Benton}  %replace with the full name of your adviser
+\degreetitle{Doctor of Philosophy}
+\degreeabbreviation{Ph.D.}
+
+\degreetype{Computing}
+\institution{The University of South Alabama}
+\school{School of Computing}
+\department{The Department of Computer Science}
+
+\signatories{
+    Chair of Thesis Committee: Dr. Ryan Benton,
+    Committee Member: Dr. David Bourrie,
+    Committee Member: Dr. H. Frazier Bindele,
+    Committee Member: Dr. Tom Johnsten,
+    Director of Graduate Studies: Dr. Debra Chapman,
+    Dean of the Graduate School: Dr. J. Harold Pardue
+}
+
+\makenomenclature
+\renewcommand{\nomname}{NOMENCLATURE}
+
+\begin{document}
+
+\makefrontmatter
+
+\include{sections/intro/intro}
+\include{sections/userresponsibilities/userresponsibilities}
+
+\bibliographystyle{ieeetr}
+\bibliography{citations}
+
+\appendix
+
+\section{First Appendix Title} \label{appendix:firstappendix}
+\input{sections/appendix/appendix}
+
+\makebio
+
+\end{document}
+
