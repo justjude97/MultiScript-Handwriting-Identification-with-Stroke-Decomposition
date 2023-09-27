@@ -19,7 +19,14 @@ parameters:
     of a handwriting stroke
 """
 def mask_grayscale(image, labels):
-    pass
+    try:
+        #might consider relaxing this constraint to the row and column dimension for multi-dimensional spatial data
+        if image.shape != labels.shape:
+            raise ValueError("image of size " + str(image.shape) +
+                              " and label array of size " + str(labels.shape) + " are not the same.")
+        
+    except ValueError as err:
+        print(err)
 
 """
 baseline stroke decomposition for graph based techniques. simply skeletonizes an image and turns it into a graph to 
