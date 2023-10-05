@@ -43,12 +43,12 @@ def simple_stroke_segment(image):
 
     #needs to be boolean for region growing, but if it's already boolean then there's no need to threhold
     image_is_bool = isinstance(image.flat[0], np.bool_)
-    foreground = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1] if image_is_bool else image
+    foreground = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1] if not image_is_bool else image
 
     im_skeleton = skeletonize(foreground)
     #build a graph from the skeletonized image and allow multple branches between nodes and allow loops in handwriting
     im_graph = sknw.build_sknw(im_skeleton, multi=True, full=True, ring=True)
-    labels = np.zeros_like(image)
+    labels = np.zeros_like(image, dtype=int)
 
     #construct a labeled image from the graph consisting of all edges
     #TODO: sknw doesn't build complete edges, need to fix this
@@ -60,6 +60,7 @@ def simple_stroke_segment(image):
     #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
     label_coords = np.array(labels.nonzero()).T
     label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
+    print(max(label_vals))
 
     #knn classifier will label foreground element via closest skeleton point
     cls = KNeighborsClassifier(n_neighbors=1)
@@ -69,7 +70,7 @@ def simple_stroke_segment(image):
     img_coords = np.array(foreground.nonzero()).T
     img_labels = cls.predict(img_coords)
 
-    segmented_image = np.zeros_like(image)
+    segmented_image = np.zeros_like(image, dtype=int)
     segmented_image[img_coords[:, 0], img_coords[:, 1]] = img_labels
 
     #now that we have segmented the image, we need to extract the segments as a list of individual strokes
