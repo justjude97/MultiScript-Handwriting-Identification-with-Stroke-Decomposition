@@ -60,8 +60,7 @@ def simple_stroke_segment(image):
     #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
     label_coords = np.array(labels.nonzero()).T
     label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
-    print(max(label_vals))
-
+    
     #knn classifier will label foreground element via closest skeleton point
     cls = KNeighborsClassifier(n_neighbors=1)
     cls.fit(label_coords, label_vals)
