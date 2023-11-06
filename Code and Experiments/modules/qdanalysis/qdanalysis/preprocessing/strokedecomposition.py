@@ -14,6 +14,13 @@ from scipy.ndimage import find_objects
 #skeleton network library
 import sknw
 
+
+"""
+should probably move this to it's own file later
+"""
+def preprocess_skeletonize(image):
+    bin_image = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1]
+    return skeletonize(bin_image)
 """
 takes in a image and it's resulting labels image and uses the labels to segment the original image via masking
 
