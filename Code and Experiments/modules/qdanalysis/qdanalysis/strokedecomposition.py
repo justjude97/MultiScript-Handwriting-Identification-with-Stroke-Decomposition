@@ -1,4 +1,6 @@
 """
+strokedecomposition.py
+
 stroke decomposition algorithms take in a preprocessed image and return a list of extracted strokes
 * strokes are approximations
 """
