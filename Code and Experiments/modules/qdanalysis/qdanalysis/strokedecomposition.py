@@ -100,18 +100,18 @@ def simple_stroke_segment(image):
     
     segmented_image = knnRegionGrowth(labels, foreground)
 
-    #now that we have segmented the image, we need to extract the segments as a list of individual strokes
-    extracted_strokes = []
-
     #bounding box coords of image labels, should line up with label numbers
     stroke_coords = find_objects(segmented_image)
 
+    #now that we have segmented the image, we need to extract the segments as a list of individual strokes
+    extracted_strokes = []
     for idx, bb in enumerate(stroke_coords):
         #get bounding box of segmented label and filter any other labels in that bounding box
-        filter = (segmented_image[bb] == idx + 1)
+        #filter = (segmented_image[bb] == idx + 1)
+        filter = (segmented_image[bb])
         extracted_strokes.append(filter)
 
-    return extracted_strokes
+    return extracted_strokes, [x for x in stroke_coords]
 
 
 
