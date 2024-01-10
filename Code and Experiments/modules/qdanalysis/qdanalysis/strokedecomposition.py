@@ -7,6 +7,7 @@ stroke decomposition algorithms take in a preprocessed image and return a list o
 
 import numpy as np
 import cv2 as cv
+import qdanalysis.preprocessing as prep
 
 from skimage.morphology import skeletonize
 from sklearn.neighbors import KNeighborsClassifier
@@ -16,13 +17,16 @@ from scipy.ndimage import find_objects
 #skeleton network library
 import sknw
 
+def label_graph_edges(im_graph, im_shape):
+    labels = np.zeros(shape=im_shape)
 
-"""
-should probably move this to it's own file later
-"""
-def preprocess_skeletonize(image):
-    bin_image = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1]
-    return skeletonize(bin_image)
+    #construct a labeled image from the graph consisting of all edges
+    for label_idx, (node1, node2, idx) in enumerate(im_graph.edges):
+        edge_points = im_graph[node1][node2][idx]['pts']
+        labels[edge_points[:, 0], edge_points[:, 1]] = label_idx + 1 #need to account for zero indexing
+
+    return labels
+
 """
 takes in a image and it's resulting labels image and uses the labels to segment the original image via masking
 
@@ -42,6 +46,37 @@ def mask_grayscale(image, labels):
         print(err)
 
 """
+uses KNearestNeighbors to take a label image and a foreground image and group the non-zero pixels of that foreground image according to the closest pixel label.
+* labels and foreground should be of the same size
+* labels is a integer array of n different class labels
+"""
+def knnRegionGrowth(labels, foreground):
+    #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
+    label_coords = np.transpose(labels.nonzero())
+    label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
+    
+    #knn classifier will label foreground element via closest skeleton point
+    cls = KNeighborsClassifier(n_neighbors=1)
+    cls.fit(label_coords, label_vals)
+
+    #now grab the coordinates of all the foreground elements and match them to a label
+    img_coords = np.transpose(foreground.nonzero())
+    img_labels = cls.predict(img_coords)
+
+    segmented_image = np.zeros_like(foreground, dtype=int)
+    segmented_image[img_coords[:, 0], img_coords[:, 1]] = img_labels
+
+    return segmented_image
+
+"""
+should probably move this to it's own file later
+"""
+def preprocess_skeletonize(image):
+    bin_image = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1]
+    return skeletonize(bin_image)
+
+
+"""
 baseline stroke decomposition for graph based techniques. simply skeletonizes an image and turns it into a graph to 
     extract edge segments. implicitly returns grayscale image if passed
 
@@ -52,34 +87,18 @@ def simple_stroke_segment(image):
 
     #needs to be boolean for region growing, but if it's already boolean then there's no need to threhold
     image_is_bool = isinstance(image.flat[0], np.bool_)
-    foreground = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1] if not image_is_bool else image
+    foreground = prep.preprocess(image) if not image_is_bool else image
 
+    #TODO should be a part of the preprocessing
     im_skeleton = skeletonize(foreground)
-    #build a graph from the skeletonized image and allow multple branches between nodes and allow loops in handwriting
-    im_graph = sknw.build_sknw(im_skeleton, multi=True, full=True, ring=True)
-    labels = np.zeros_like(image, dtype=int)
 
-    #construct a labeled image from the graph consisting of all edges
+    #convert to skeleton to graph representation
     #TODO: sknw doesn't build complete edges, need to fix this
-    for label_idx, (node1, node2, idx) in enumerate(im_graph.edges):
-        edge_points = im_graph[node1][node2][idx]['pts']
+    im_graph = sknw.build_sknw(im_skeleton, multi=True, full=True, ring=True)
 
-        labels[edge_points[:, 0], edge_points[:, 1]] = label_idx + 1 #need to account for zero indexing
+    labels = label_graph_edges(im_graph, image.shape)
     
-    #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
-    label_coords = np.array(labels.nonzero()).T
-    label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
-    
-    #knn classifier will label foreground element via closest skeleton point
-    cls = KNeighborsClassifier(n_neighbors=1)
-    cls.fit(label_coords, label_vals)
-
-    #now grab the coordinates of all the foreground elements and match them to a label
-    img_coords = np.array(foreground.nonzero()).T
-    img_labels = cls.predict(img_coords)
-
-    segmented_image = np.zeros_like(image, dtype=int)
-    segmented_image[img_coords[:, 0], img_coords[:, 1]] = img_labels
+    segmented_image = knnRegionGrowth(labels, foreground)
 
     #now that we have segmented the image, we need to extract the segments as a list of individual strokes
     extracted_strokes = []
