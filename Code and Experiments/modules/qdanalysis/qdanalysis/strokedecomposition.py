@@ -108,7 +108,7 @@ def simple_stroke_segment(image):
         filter = (segmented_image[bb] == idx + 1)
         extracted_strokes.append(filter)
 
-    return extracted_strokes, [x for x in stroke_coords], segmented_image, im_skeleton
+    return extracted_strokes
 
 
 
