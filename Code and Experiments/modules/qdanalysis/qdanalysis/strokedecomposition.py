@@ -89,7 +89,7 @@ def simple_stroke_segment(image):
     image_is_bool = isinstance(image.flat[0], np.bool_)
     foreground = prep.preprocess(image) if not image_is_bool else image
 
-    #TODO should be a part of the preprocessing
+    # uses Zhang's algorithm as default for 2D
     im_skeleton = skeletonize(foreground)
 
     #convert to skeleton to graph representation
