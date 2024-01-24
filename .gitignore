@@ -5,6 +5,7 @@ __pycache__/
 
 #ignore the datasets folder
 Code and Experiments/datasets/
+Code and Experiments/experimentation/output/*
 
 # C extensions
 *.so
