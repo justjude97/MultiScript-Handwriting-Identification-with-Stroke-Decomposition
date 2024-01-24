@@ -85,11 +85,7 @@ parameters:
 """
 def simple_stroke_segment(image):
 
-    #needs to be boolean for region growing, but if it's already boolean then there's no need to threhold
-    image_is_bool = isinstance(image.flat[0], np.bool_)
-    #foreground = prep.preprocess(image) if not image_is_bool else image
-    #TODO: this is temporary
-    foreground = image
+    foreground = prep.preprocess(image)
 
     # uses Zhang's algorithm as default for 2D
     im_skeleton = skeletonize(foreground)
@@ -98,7 +94,7 @@ def simple_stroke_segment(image):
     #TODO: sknw doesn't build complete edges, need to fix this
     im_graph = sknw.build_sknw(im_skeleton, multi=True, full=True, ring=True)
 
-    labels = label_graph_edges(im_graph, image.shape)
+    labels = label_graph_edges(im_graph, foreground.shape)
     
     segmented_image = knnRegionGrowth(labels, foreground)
 
