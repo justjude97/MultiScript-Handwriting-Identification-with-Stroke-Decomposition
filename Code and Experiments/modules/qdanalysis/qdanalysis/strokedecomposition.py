@@ -17,6 +17,29 @@ from scipy.ndimage import find_objects
 #skeleton network library
 import sknw
 
+"""
+uses KNearestNeighbors to take a label image and a foreground image and group the non-zero pixels of that foreground image according to the closest pixel label.
+* labels and foreground should be of the same size
+* labels is a integer array of n different class labels
+"""
+def knnRegionGrowth(labels, foreground):
+    #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
+    label_coords = np.transpose(labels.nonzero())
+    label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
+    
+    #knn classifier will label foreground element via closest skeleton point
+    cls = KNeighborsClassifier(n_neighbors=1)
+    cls.fit(label_coords, label_vals)
+
+    #now grab the coordinates of all the foreground elements and match them to a label
+    img_coords = np.transpose(foreground.nonzero())
+    img_labels = cls.predict(img_coords)
+
+    segmented_image = np.zeros_like(foreground, dtype=int)
+    segmented_image[img_coords[:, 0], img_coords[:, 1]] = img_labels
+
+    return segmented_image
+
 def label_graph_edges(im_graph, im_shape):
     labels = np.zeros(shape=im_shape)
 
@@ -46,29 +69,6 @@ def mask_grayscale(image, labels):
         print(err)
 
 """
-uses KNearestNeighbors to take a label image and a foreground image and group the non-zero pixels of that foreground image according to the closest pixel label.
-* labels and foreground should be of the same size
-* labels is a integer array of n different class labels
-"""
-def knnRegionGrowth(labels, foreground):
-    #this is the "train" and "test" set for the knn classifier, what the other values are going to be matched to
-    label_coords = np.transpose(labels.nonzero())
-    label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
-    
-    #knn classifier will label foreground element via closest skeleton point
-    cls = KNeighborsClassifier(n_neighbors=1)
-    cls.fit(label_coords, label_vals)
-
-    #now grab the coordinates of all the foreground elements and match them to a label
-    img_coords = np.transpose(foreground.nonzero())
-    img_labels = cls.predict(img_coords)
-
-    segmented_image = np.zeros_like(foreground, dtype=int)
-    segmented_image[img_coords[:, 0], img_coords[:, 1]] = img_labels
-
-    return segmented_image
-
-"""
 should probably move this to it's own file later
 """
 def preprocess_skeletonize(image):
@@ -87,7 +87,9 @@ def simple_stroke_segment(image):
 
     #needs to be boolean for region growing, but if it's already boolean then there's no need to threhold
     image_is_bool = isinstance(image.flat[0], np.bool_)
-    foreground = prep.preprocess(image) if not image_is_bool else image
+    #foreground = prep.preprocess(image) if not image_is_bool else image
+    #TODO: this is temporary
+    foreground = image
 
     # uses Zhang's algorithm as default for 2D
     im_skeleton = skeletonize(foreground)
@@ -107,11 +109,10 @@ def simple_stroke_segment(image):
     extracted_strokes = []
     for idx, bb in enumerate(stroke_coords):
         #get bounding box of segmented label and filter any other labels in that bounding box
-        #filter = (segmented_image[bb] == idx + 1)
-        filter = (segmented_image[bb])
+        filter = (segmented_image[bb] == idx + 1)
         extracted_strokes.append(filter)
 
-    return extracted_strokes, [x for x in stroke_coords]
+    return extracted_strokes, [x for x in stroke_coords], segmented_image, im_skeleton
 
 
 
