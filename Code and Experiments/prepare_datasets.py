@@ -11,6 +11,23 @@ import cv2 as cv
 import qdanalysis.strokedecomposition as sd
 import qdanalysis.preprocessing as prep
 
+#TODO: modify to receive classname from function, ro method to extract classname from function
+def process_batch(class_name, file_batch, base_output_dir):
+    
+    output_dir = os.path.join(base_output_dir, class_name)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for file in file_batch:
+        # Process each file
+        image = cv.imread(file)
+        processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
+
+        for image_no, subimage in enumerate(processed_strokes):
+            # Save the processed data
+            #TODO: ugly. fix later. also figure out ideal image format
+            output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
+            cv.imwrite(output_path, subimage.astype(int)*255)
+
 """
 CERUG dataset presented in 'Junction Detection in Handwritten Documents and its Application to Writer Identification'
 page 1: chinese template text (CERUG-CN)
@@ -31,35 +48,30 @@ preparation steps:
 3. preprocess image
 4. extract stroke images and save
 """
-
-#TODO: modify to receive classname from function, ro method to extract classname from function
-def process_batch(class_name, file_batch, base_output_dir):
-    
-    output_dir = os.path.join(base_output_dir, class_name)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    for file in file_batch:
-        # Process each file
-        image = cv.imread(file)
-        processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
-
-        for image_no, subimage in enumerate(processed_strokes):
-            # Save the processed data
-            #TODO: ugly. fix later. also figure out ideal image format
-            output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
-            print(output_path)
-            cv.imwrite(output_path, subimage.astype(int)*255)
-
 def prepare_cerug(input_dir, output_dir):
     
+    #reformat to {writerclass}_{writerscript}
     def get_class_from_filename(filename):
-        # Logic to extract class from filename, e.g., 'Writer0101_01' -> 'Writer0101'
-        return filename.split('_')[0]
+        #script part is unimportant
+        # {writerclass}_{script class}-{script part}
+        writer_split = filename.split('_')
+        writer_class = writer_split[0]
+
+        page_no = writer_split[1].split('-')[0]
+        
+        if page_no == '01' or page_no == '02':
+            writer_script = 'CN'
+        elif page_no == '03':
+            writer_script = 'EN'
+        else:
+            writer_script = 'MIXED'
+    
+        return writer_class + '_' + writer_script
 
     # Organize files into batches by class
     file_batches = {}
     for file_path in Path(input_dir).iterdir():
-        class_name = get_class_from_filename(file_path.name)
+        class_name = get_class_from_filename(file_path.stem)
         file_path = str(file_path)
         if class_name not in file_batches:
             file_batches[class_name] = []
