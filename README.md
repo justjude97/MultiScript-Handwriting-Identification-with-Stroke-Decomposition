@@ -1,2 +1,4 @@
 # MultiScript-Handwriting-Identification-with-Stroke-Decomposition
 This is the work so far for my masters thesis on Handwriting Identification/Verification in the Multi-Script setting. Writing Identification deals with the identificaiton of one or more writers, and Multi-Script Writing Identification deals with Writing Identification where a writer can create handwritten documents in one or more writing languages.
+
+requirements.txt contains the list of python modules required to set up the environment for this project (note that the submodules qdanalysis and sknw may have to be installed separately as they are local packages)
