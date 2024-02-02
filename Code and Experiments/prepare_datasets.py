@@ -1,6 +1,11 @@
 """
 contains the code used to transform the given datasets from single images (scanned handwritten documents) to 
     multiple subimages (segmented strokes)
+
+current strategy is to split dataset into multiple datasets dependant on script, and combine as needed.
+
+e.g:
+CERUG -> EN, CN, MIXED
 """
 
 from multiprocessing import Process
@@ -11,13 +16,17 @@ import cv2 as cv
 import qdanalysis.strokedecomposition as sd
 import qdanalysis.preprocessing as prep
 
-#TODO: modify to receive classname from function, ro method to extract classname from function
+"""
+    perform the stroke decomposition process on the given batches of files
+    * file_batch is now a list of tuples of the form (filepath, writing script)
+"""
 def process_batch(class_name, file_batch, base_output_dir):
     
-    output_dir = os.path.join(base_output_dir, class_name)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    for file in file_batch:
+    for file, script in file_batch:
+        #make directory for writer in specific script folder
+        output_dir = os.path.join(base_output_dir, script, class_name)
+        os.makedirs(output_dir, exist_ok=True)
+
         # Process each file
         image = cv.imread(file)
         processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
@@ -25,7 +34,7 @@ def process_batch(class_name, file_batch, base_output_dir):
         for image_no, subimage in enumerate(processed_strokes):
             # Save the processed data
             #TODO: ugly. fix later. also figure out ideal image format
-            output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
+            output_path = os.path.join(output_dir, script, f'{Path(file).stem}_{image_no}.png')
             cv.imwrite(output_path, subimage.astype(int)*255)
 
 """
@@ -38,15 +47,6 @@ page 4: Chinese/English template (CERUG-MIXED)
 NOTE: page 3 is split into two parts
 
 CERUG filename format: {Writername}_{pagenumber}-{pagepart}
-
-preparation steps:
-1. go throught the folder of the CERUG dataset, for each:
-2. create a class based on filename (above)
-    * page 1/2 - Writer{num}-CN
-    * page 3 (parts 1 and 2) - writer{num}-EN
-    * page 4 (optional) - writer{num}-MIXED
-3. preprocess image
-4. extract stroke images and save
 """
 def prepare_cerug(input_dir, output_dir):
     
@@ -66,16 +66,27 @@ def prepare_cerug(input_dir, output_dir):
         else:
             writer_script = 'MIXED'
     
-        return writer_class + '_' + writer_script
+        return writer_class, writer_script
+
+    #create subdirectories for each writing script
+    writing_scripts = ['CN', 'EN', 'MIXED']
+    for script in writing_scripts:
+        script_subdir = os.path.join(output_dir, script)
+        os.makedirs(script_subdir, exist_ok=False)
 
     # Organize files into batches by class
     file_batches = {}
     for file_path in Path(input_dir).iterdir():
-        class_name = get_class_from_filename(file_path.stem)
+        class_name, script = get_class_from_filename(file_path.stem)
+        
         file_path = str(file_path)
         if class_name not in file_batches:
             file_batches[class_name] = []
-        file_batches[class_name].append(file_path)
+        
+        #filepath wrapped up with script so processes can decide which folder to put a output
+        file_batches[class_name].append((file_path, script))
+
+        
 
     # Main process
     processes = []
@@ -88,4 +99,4 @@ def prepare_cerug(input_dir, output_dir):
         p.join()
 
 if __name__ == "__main__":
-    prepare_cerug("./experimentation/CERUG", "./experimentation/output/cerug_test_processing")
+    prepare_cerug("./datasets/CERUG", "./experimentation/output/cerug_test_processing")
