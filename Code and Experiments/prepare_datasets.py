@@ -34,7 +34,7 @@ def process_batch(class_name, file_batch, base_output_dir):
         for image_no, subimage in enumerate(processed_strokes):
             # Save the processed data
             #TODO: ugly. fix later. also figure out ideal image format
-            output_path = os.path.join(output_dir, script, f'{Path(file).stem}_{image_no}.png')
+            output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
             cv.imwrite(output_path, subimage.astype(int)*255)
 
 """
@@ -99,4 +99,4 @@ def prepare_cerug(input_dir, output_dir):
         p.join()
 
 if __name__ == "__main__":
-    prepare_cerug("./datasets/CERUG", "./experimentation/output/cerug_test_processing")
+    prepare_cerug("./experimentation/CERUG", "./experimentation/output/cerug_test_processing")
