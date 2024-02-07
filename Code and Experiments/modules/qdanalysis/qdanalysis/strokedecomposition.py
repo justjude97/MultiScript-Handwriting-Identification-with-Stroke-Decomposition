@@ -69,14 +69,6 @@ def mask_grayscale(image, labels):
         print(err)
 
 """
-should probably move this to it's own file later
-"""
-def preprocess_skeletonize(image):
-    bin_image = cv.threshold(image, 0, 1, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1]
-    return skeletonize(bin_image)
-
-
-"""
 baseline stroke decomposition for graph based techniques. simply skeletonizes an image and turns it into a graph to 
     extract edge segments. implicitly returns grayscale image if passed
 
@@ -96,16 +88,18 @@ def simple_stroke_segment(image):
 
     labels = label_graph_edges(im_graph, foreground.shape)
     
-    segmented_image = knnRegionGrowth(labels, foreground)
+    #this section down converts the graph representation into the filtered, segmented images
+
+    stroke_labels = knnRegionGrowth(labels, foreground)
 
     #bounding box coords of image labels, should line up with label numbers
-    stroke_coords = find_objects(segmented_image)
+    stroke_bb = find_objects(stroke_labels)
 
     #now that we have segmented the image, we need to extract the segments as a list of individual strokes
     extracted_strokes = []
-    for idx, bb in enumerate(stroke_coords):
+    for idx, bb in enumerate(stroke_bb):
         #get bounding box of segmented label and filter any other labels in that bounding box
-        filter = (segmented_image[bb] == idx + 1)
+        filter = (stroke_labels[bb] == idx + 1)
         extracted_strokes.append(filter)
 
     return extracted_strokes
