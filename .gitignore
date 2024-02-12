@@ -7,6 +7,9 @@ __pycache__/
 Code and Experiments/datasets/
 Code and Experiments/experimentation/output/*
 
+#hidden folder form google synch system
+Documentation/.tmp.driveupload
+
 # C extensions
 *.so
 
