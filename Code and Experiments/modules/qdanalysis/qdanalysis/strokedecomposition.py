@@ -50,6 +50,19 @@ def label_graph_edges(im_graph, im_shape):
 
     return labels
 
+def label_graph_edges_and_nodes(im_graph, im_shape):
+    labels = np.zeros(shape=im_shape)
+    #labels from 1, 2, .. n (0 is background)
+    label_idx = 1
+    #construct a labeled image from the graph consisting of all edges
+    for (node1, node2, idx) in im_graph.edges:
+        edge_points = im_graph[node1][node2][idx]['pts']
+
+        labels[edge_points[:, 0], edge_points[:, 1]] = label_idx #need to account for zero indexing
+        label_idx += 1
+
+    return labels
+
 """
 takes in a image and it's resulting labels image and uses the labels to segment the original image via masking
 
