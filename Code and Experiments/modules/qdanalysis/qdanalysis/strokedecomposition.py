@@ -28,7 +28,7 @@ def knnRegionGrowth(labels, foreground):
     label_vals = labels[label_coords[:, 0], label_coords[:, 1]]
     
     #knn classifier will label foreground element via closest skeleton point
-    cls = KNeighborsClassifier(n_neighbors=1)
+    cls = KNeighborsClassifier(n_neighbors=3)
     cls.fit(label_coords, label_vals)
 
     #now grab the coordinates of all the foreground elements and match them to a label
@@ -40,7 +40,9 @@ def knnRegionGrowth(labels, foreground):
 
     return segmented_image
 
+#TODO: right now this function returns an image containing the array of labels. may be faster to directly give a list of labels?
 def label_graph_edges(im_graph, im_shape):
+    #array, the size of the image that the labels are written onto
     labels = np.zeros(shape=im_shape)
 
     #construct a labeled image from the graph consisting of all edges
@@ -51,17 +53,31 @@ def label_graph_edges(im_graph, im_shape):
     return labels
 
 def label_graph_edges_and_nodes(im_graph, im_shape):
-    labels = np.zeros(shape=im_shape)
+    #array, the size of the image that the labels are written onto
+    label_img = np.zeros(shape=im_shape)
     #labels from 1, 2, .. n (0 is background)
     label_idx = 1
+    label_attr = 'label'
+    
+    for node_id in im_graph.nodes:
+        node_points = im_graph.nodes[node_id]['pts']
+        label_img[node_points[:, 0], node_points[:, 1]] = label_idx
+
+        #assign label attr to node
+        im_graph.nodes[node_id][label_attr] = label_idx
+        label_idx += 1
+
     #construct a labeled image from the graph consisting of all edges
     for (node1, node2, idx) in im_graph.edges:
         edge_points = im_graph[node1][node2][idx]['pts']
 
-        labels[edge_points[:, 0], edge_points[:, 1]] = label_idx #need to account for zero indexing
+        label_img[edge_points[:, 0], edge_points[:, 1]] = label_idx #need to account for zero indexing
+
+        im_graph[node1][node2][idx][label_attr] = label_idx
         label_idx += 1
 
-    return labels
+    #NOTE: maybe assign as graph attribute?
+    return label_img
 
 """
 takes in a image and it's resulting labels image and uses the labels to segment the original image via masking
