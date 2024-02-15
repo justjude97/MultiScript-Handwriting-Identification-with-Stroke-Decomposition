@@ -22,22 +22,22 @@ import qdanalysis.preprocessing as prep
 """
 def process_batch(class_name, file_batch, base_output_dir, logging_lock):
     
-    for file, script in file_batch:
+    for file_path, script, page_no in file_batch:
         #make directory for writer in specific script folder
-        output_dir = os.path.join(base_output_dir, script, class_name)
+        output_dir = os.path.join(base_output_dir, script, class_name, page_no)
         os.makedirs(output_dir, exist_ok=True)
 
         #danger zone
         try:
             # Process each file
-            image = cv.imread(file, cv.IMREAD_GRAYSCALE)
+            image = cv.imread(file_path, cv.IMREAD_GRAYSCALE)
             processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
 
         #if something happens when trying to load or process a file, log and skip
         except Exception as e:
             logging_lock.acquire()
             
-            print(f"exception occured when processing file: {file}")
+            print(f"exception occured when processing file: {file_path}")
             print(e)
 
             logging_lock.release()
@@ -48,7 +48,7 @@ def process_batch(class_name, file_batch, base_output_dir, logging_lock):
         for image_no, subimage in enumerate(processed_strokes):
             # Save the processed data
             #TODO: ugly. fix later. also figure out ideal image format
-            output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
+            output_path = os.path.join(output_dir, f'{Path(file_path).stem}_{image_no}.png')
             cv.imwrite(output_path, subimage)
 
 """
@@ -79,8 +79,9 @@ def prepare_cerug(input_dir, output_dir):
             writer_script = 'EN'
         else:
             writer_script = 'MIXED'
-    
-        return writer_class, writer_script
+
+        #TODO: probably not a good idea to do writer script and page no. fix later?
+        return writer_class, writer_script, page_no
 
     #create subdirectories for each writing script
     writing_scripts = ['CN', 'EN', 'MIXED']
@@ -91,14 +92,14 @@ def prepare_cerug(input_dir, output_dir):
     # Organize files into batches by class
     file_batches = {}
     for file_path in Path(input_dir).iterdir():
-        class_name, script = get_class_from_filename(file_path.stem)
+        class_name, script, page_no = get_class_from_filename(file_path.stem)
         
         file_path = str(file_path)
         if class_name not in file_batches:
             file_batches[class_name] = []
         
         #filepath wrapped up with script so processes can decide which folder to put a output
-        file_batches[class_name].append((file_path, script))
+        file_batches[class_name].append((file_path, script, page_no))
 
         
     logging_lock = Lock()
