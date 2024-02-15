@@ -17,6 +17,39 @@ from scipy.ndimage import find_objects
 #skeleton network library
 import sknw
 
+#get height and width of the slice object and pass (False) or fail (True)
+def reject_slice(bb, im_shape):
+    
+    #sometimes scipy returns a None instead of a slice. not sure why, but can gloss over it for now
+    if bb is None:
+        return True
+    
+    h_slice, w_slice = bb
+    #should always be positive, but abs is a guarantee
+    height = abs(h_slice.stop - h_slice.start)
+    width = abs(w_slice.stop - w_slice.start)
+
+    #reject thin stroke regions
+    thin_t = 3
+    if min(height, width) <= thin_t:
+        return True
+    
+    #reject small blobs (where both dimensions are less than blob_t)
+    blob_t = 10
+    if height <= blob_t and width <= blob_t:
+        return True
+    
+    #reject overly long shapes
+    im_height, im_width = im_shape
+    height_perc = 0.75
+    width_perc = 0.75
+    if height > im_height*height_perc or width > im_width*width_perc:
+        return True
+    
+    return False
+
+    
+
 """
 uses KNearestNeighbors to take a label image and a foreground image and group the non-zero pixels of that foreground image according to the closest pixel label.
 * labels and foreground should be of the same size
@@ -40,7 +73,7 @@ def knnRegionGrowth(labels, foreground):
 
     return segmented_image
 
-#TODO: right now this function returns an image containing the array of labels. may be faster to directly give a list of labels?
+#assigns an integer label, 1, 2, .., n for
 def label_graph_edges(im_graph, im_shape):
     #array, the size of the image that the labels are written onto
     labels = np.zeros(shape=im_shape)
@@ -52,6 +85,7 @@ def label_graph_edges(im_graph, im_shape):
 
     return labels
 
+#assigns an integer label 1, 2, .., n for both the nodes and edges
 def label_graph_edges_and_nodes(im_graph, im_shape):
     #array, the size of the image that the labels are written onto
     label_img = np.zeros(shape=im_shape)
@@ -80,24 +114,6 @@ def label_graph_edges_and_nodes(im_graph, im_shape):
     return label_img
 
 """
-takes in a image and it's resulting labels image and uses the labels to segment the original image via masking
-
-parameters:
-* image - a preprocessed iamge represented as an nd_array
-* labels - an array that is the same size as image and contains integer labels representing segmented portions
-    of a handwriting stroke
-"""
-def mask_grayscale(image, labels):
-    try:
-        #might consider relaxing this constraint to the row and column dimension for multi-dimensional spatial data
-        if image.shape != labels.shape:
-            raise ValueError("image of size " + str(image.shape) +
-                              " and label array of size " + str(labels.shape) + " are not the same.")
-        
-    except ValueError as err:
-        print(err)
-
-"""
 baseline stroke decomposition for graph based techniques. simply skeletonizes an image and turns it into a graph to 
     extract edge segments. implicitly returns grayscale image if passed
 
@@ -106,30 +122,41 @@ parameters:
 """
 def simple_stroke_segment(image):
 
-    foreground = prep.preprocess(image)
+    #step 1
+    image_gs, image_bin = prep.preprocess(image)
 
+    #step 2
     # uses Zhang's algorithm as default for 2D
-    im_skeleton = skeletonize(foreground)
+    im_skeleton = skeletonize(image_bin)
 
+    #step 3
     #convert to skeleton to graph representation
-    #TODO: sknw doesn't build complete edges, need to fix this
-    im_graph = sknw.build_sknw(im_skeleton, multi=True, full=True, ring=True)
+    #Full doesn't seem to be properly implemented. seems to just set the 'start' and 'end' pixel coordinates to the mean of the node pixels
+    im_graph = sknw.build_sknw(im_skeleton, multi=True, full=False, ring=True)
 
-    labels = label_graph_edges(im_graph, foreground.shape)
-    
-    #this section down converts the graph representation into the filtered, segmented images
+    #step 4
+    labels = label_graph_edges(im_graph, image_bin.shape)
+    #step 5
+    #region growing
+    region_attr = 'regions'
+    im_graph.graph[region_attr] = knnRegionGrowth(labels, image_bin)
 
-    stroke_labels = knnRegionGrowth(labels, foreground)
-
+    #step 6 and 7
     #bounding box coords of image labels, should line up with label numbers
-    stroke_bb = find_objects(stroke_labels)
+    stroke_bb = find_objects(im_graph.graph[region_attr])
 
     #now that we have segmented the image, we need to extract the segments as a list of individual strokes
     extracted_strokes = []
     for idx, bb in enumerate(stroke_bb):
+        
+        #skip slice if fails the filter_criteron (step 6)
+        if reject_slice(bb, image_gs.shape):
+            continue
+
         #get bounding box of segmented label and filter any other labels in that bounding box
-        filter = (stroke_labels[bb] == idx + 1)
-        extracted_strokes.append(filter)
+        filter = (im_graph.graph[region_attr][bb] == idx + 1)
+        masked_gs = image_gs[bb] * filter.astype(int)
+        extracted_strokes.append(masked_gs)
 
     return extracted_strokes
 

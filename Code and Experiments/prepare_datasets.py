@@ -8,7 +8,7 @@ e.g:
 CERUG -> EN, CN, MIXED
 """
 
-from multiprocessing import Process
+from multiprocessing import Process, Lock
 import os
 from pathlib import Path
 import cv2 as cv
@@ -20,22 +20,36 @@ import qdanalysis.preprocessing as prep
     perform the stroke decomposition process on the given batches of files
     * file_batch is now a list of tuples of the form (filepath, writing script)
 """
-def process_batch(class_name, file_batch, base_output_dir):
+def process_batch(class_name, file_batch, base_output_dir, logging_lock):
     
     for file, script in file_batch:
         #make directory for writer in specific script folder
         output_dir = os.path.join(base_output_dir, script, class_name)
         os.makedirs(output_dir, exist_ok=True)
 
-        # Process each file
-        image = cv.imread(file)
-        processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
+        #danger zone
+        try:
+            # Process each file
+            image = cv.imread(file, cv.IMREAD_GRAYSCALE)
+            processed_strokes = sd.simple_stroke_segment(image) # processing logic for each file
 
+        #if something happens when trying to load or process a file, log and skip
+        except Exception as e:
+            logging_lock.acquire()
+            
+            print(f"exception occured when processing file: {file}")
+            print(e)
+
+            logging_lock.release()
+
+            continue
+
+            
         for image_no, subimage in enumerate(processed_strokes):
             # Save the processed data
             #TODO: ugly. fix later. also figure out ideal image format
             output_path = os.path.join(output_dir, f'{Path(file).stem}_{image_no}.png')
-            cv.imwrite(output_path, subimage.astype(int)*255)
+            cv.imwrite(output_path, subimage)
 
 """
 CERUG dataset presented in 'Junction Detection in Handwritten Documents and its Application to Writer Identification'
@@ -87,11 +101,12 @@ def prepare_cerug(input_dir, output_dir):
         file_batches[class_name].append((file_path, script))
 
         
+    logging_lock = Lock()
 
     # Main process
     processes = []
     for class_name, batch in file_batches.items():
-        p = Process(target=process_batch, args=(class_name, batch, output_dir))
+        p = Process(target=process_batch, args=(class_name, batch, output_dir, logging_lock))
         p.start()
         processes.append(p)
 
