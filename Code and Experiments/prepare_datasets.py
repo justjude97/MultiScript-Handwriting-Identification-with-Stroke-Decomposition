@@ -115,4 +115,10 @@ def prepare_cerug(input_dir, output_dir):
         p.join()
 
 if __name__ == "__main__":
-    prepare_cerug("./experimentation/CERUG", "./experimentation/output/cerug_test_processing")
+    #testing
+    #prepare_cerug("./experimentation/CERUG", "./experimentation/output/cerug_test_processing")
+
+    #time to fry an egg on my cpu
+    cerug_fp = './datasets/CERUG'
+    output_dir = './prepared_datasets/CERUG'
+    prepare_cerug(cerug_fp, output_dir)
