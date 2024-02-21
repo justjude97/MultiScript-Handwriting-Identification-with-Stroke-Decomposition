@@ -6,7 +6,7 @@ __pycache__/
 #ignore the datasets folder
 Code and Experiments/datasets/*
 Code and Experiments/prepared datasets/*
-Code and Experiments/experimentation/output/*
+Code and Experiments/prototyping/output/*
 Code and Experiments/models and logs/
 
 #hidden folder form google synch system
