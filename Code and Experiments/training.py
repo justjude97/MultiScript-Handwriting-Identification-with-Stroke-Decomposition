@@ -5,7 +5,7 @@ from qdanalysis.models import adapt_resnet50
 import tensorflow as tf
 import tensorflow.keras as keras
 
-def train_model(root_dir: str, train_set_fp: str, test_set_fp):
+def train_model(root_dir: str, train_set, validation_set):
 
     #Callback Functions
     #Checkpoint Callback - model directory
