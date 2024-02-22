@@ -23,7 +23,7 @@ experiment_fp=$rootdir/experiment_2
 mkdir $experiment_fp
 python training.py "$experiment_fp" "$dataset_fp" EN | tee $experiment_fp/log.txt
 
-echo "running experiment 3 (train on chinese and english and train on MIXED)"
+echo "running experiment 3 (train on chinese and english (manually merged in MIXED))"
 experiment_fp=$rootdir/experiment_3
 mkdir $experiment_fp
-python training.py "$experiment_fp" "$dataset_fp" CN EN | tee $experiment_fp/log.txt
+python training.py "$experiment_fp" "$dataset_fp" MERGED | tee $experiment_fp/log.txt

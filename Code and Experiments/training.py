@@ -9,10 +9,16 @@ def train_model(root_dir: str, writer_classes, train_set, validation_set):
 
     #Callback Functions
     #Checkpoint Callback - model directory
-    #Tensorboard Callback - logging directory
+    checkpoint_dir = os.path.join(root_dir, 'model_weights')
+    print("model checkpoint directory: ", checkpoint_dir)
+    os.mkdir(checkpoint_dir)
+    checkpoint_fp = os.path.join(checkpoint_dir, 'weights')
+    checkpoint_cb = keras.callbacks.ModelCheckpoint(checkpoint_fp, save_best_only=True, save_weights_only=True)
 
-    #check if train and validationsets have the same writer class
-    assert train_classes == train_classes_val, "training set and validation set have different labels"
+    #Tensorboard Callback - logging directory
+    log_fp = os.path.join(root_dir, 'logs')
+    print("tensorboard log directory: ", log_fp)
+    tensorboard_cb = keras.callbacks.ModelCheckpoint(log_fp)
     
     #Optimizer and Hyperparameters
     # optimizer and loss taken from https://stackoverflow.com/questions/71704268/using-tf-keras-utils-image-dataset-from-directory-with-label-list
@@ -40,9 +46,15 @@ def train_model(root_dir: str, writer_classes, train_set, validation_set):
     model = adapt_resnet50(input_shape, len(writer_classes), False)
     model.compile(optimizer=optimizer, loss=lossfn, metrics=metrics)
 
-    epochs = 1
-    history = model.fit(train_data, epochs=epochs, validation_data=validation_data)
+    print("begining training:")
+    epochs = 40
+    history = model.fit(train_data, 
+                        epochs=epochs, 
+                        validation_data=validation_data,
+                        callbacks=[checkpoint_cb, tensorboard_cb],
+                        verbose=2) #verbose=2 only prints epochs at the end. no interactivity
 
+#program start
 if __name__ == '__main__':
     import sys
     import os

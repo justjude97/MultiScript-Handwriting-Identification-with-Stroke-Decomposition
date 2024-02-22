@@ -5,13 +5,13 @@ methods that build keras models
 import tensorflow as tf
 import tensorflow.keras as keras
 
-def adapt_resnet50(input_shape, num_classes=10, freeze_weights=True):
+def adapt_resnet50(input_shape, num_classes=10, freeze_layers=True, weights='imagenet'):
 
     base_model = keras.applications.resnet50.ResNet50(include_top=False,
-                                                      weights='imagenet',
+                                                      weights=weights,
                                                       input_shape=input_shape)
     
-    if freeze_weights:
+    if freeze_layers:
         for layer in base_model.layers:
             layer.trainable = False
 
