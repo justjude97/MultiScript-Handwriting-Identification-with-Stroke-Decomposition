@@ -10,6 +10,9 @@ Code and Experiments/prototyping/output/*
 Code and Experiments/models and logs/
 Code and Experiments/experiments/
 
+#ignore experimental files dragged into visualizations
+Code and Experiments/visualizations/*/
+
 #hidden folder form google synch system
 Documentation/.tmp.driveupload
 
