@@ -18,7 +18,7 @@ def train_model(root_dir: str, writer_classes, train_set, validation_set):
     #Tensorboard Callback - logging directory
     log_fp = os.path.join(root_dir, 'logs')
     print("tensorboard log directory: ", log_fp)
-    tensorboard_cb = keras.callbacks.ModelCheckpoint(log_fp)
+    tensorboard_cb = keras.callbacks.TensorBoard(log_fp)
     
     #Optimizer and Hyperparameters
     # optimizer and loss taken from https://stackoverflow.com/questions/71704268/using-tf-keras-utils-image-dataset-from-directory-with-label-list
