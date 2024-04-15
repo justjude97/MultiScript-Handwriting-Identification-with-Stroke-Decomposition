@@ -4,14 +4,11 @@ __pycache__/
 *$py.class
 
 #ignore the datasets folder
-Code and Experiments/datasets/*
-Code and Experiments/prepared datasets/*
-Code and Experiments/prototyping/output/*
-Code and Experiments/models and logs/
-Code and Experiments/experiments/
-
-#ignore experimental files dragged into visualizations
-Code and Experiments/visualizations/*/
+MSWI_Stroke_Fragmentation/datasets/*
+MSWI_Stroke_Fragmentation/prepared datasets/*
+MSWI_Stroke_Fragmentation/prototyping/output/*
+MSWI_Stroke_Fragmentation/models and logs/
+MSWI_Stroke_Fragmentation/experiments/
 
 #hidden folder form google synch system
 Documentation/.tmp.driveupload

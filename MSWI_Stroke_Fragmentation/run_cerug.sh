@@ -9,7 +9,7 @@ echo "root directory:" $rootdir
 rm -rf $rootdir
 mkdir -p $rootdir
 
-dataset_fp="./prepared datasets/CERUG"
+dataset_fp="./prepared datasets/CERUG/"
 echo "dataset location:" $(realpath -s "$dataset_fp")
 
 echo "running experiment 1 (train on chinese and test on english)"
